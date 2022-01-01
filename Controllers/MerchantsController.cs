@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PspApi.Data;
 using PspApi.DTO;
 using PspApi.Models;
+using PspApi.Repositories.MerchantsRepository;
 
 namespace PspApi.Controllers
 {
@@ -10,30 +9,22 @@ namespace PspApi.Controllers
     [ApiController]
     public class MerchantsController : ControllerBase
     {
-        private readonly DatabaseContext _context;
-        public MerchantsController(DatabaseContext context)
-        {
-            _context = context;
-        }
+        private readonly IMerchantsRepository _merchantsRepository;
 
-        private static List<Merchant> merchants = new List<Merchant>
+        public MerchantsController(IMerchantsRepository repository)
         {
-            new Merchant("Test Merchant", "1234")
-        };
+            _merchantsRepository = repository;
+        }
 
         [HttpPost]
         public async Task<ActionResult<Merchant>> Create(CreateOrUpdateMerchantDTO merchantData)
         {
-            var validadeMerchantDoc = await _context.Merchants.FirstOrDefaultAsync(x => x.DocumentNumber == merchantData.DocumentNumber);
+            var validadeDoc = await _merchantsRepository.FindByDoc(merchantData.DocumentNumber);
 
-            if (validadeMerchantDoc != null)
+            if (validadeDoc != null)
                 return BadRequest("Merchant already exists!");
 
-            var createdMerchant = new Merchant(merchantData.Name, merchantData.DocumentNumber);
-
-            _context.Merchants.Add(createdMerchant);
-            await _context.SaveChangesAsync();
-
+            var createdMerchant = await _merchantsRepository.Create(merchantData);
 
             return Ok(createdMerchant);
         }
@@ -41,16 +32,14 @@ namespace PspApi.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Merchant>>> GetAll()
         {
-            var result = await _context.Merchants.Where(x => x.Active).ToListAsync();
-
-
+            var result = await _merchantsRepository.ListAll();
             return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Merchant>> GetOne(Guid id)
         {
-            var merchant = await _context.Merchants.FindAsync(id);
+            var merchant = await _merchantsRepository.FindById(id);
 
             if (merchant == null)
                 return NotFound("Merchant not found!");
@@ -61,33 +50,30 @@ namespace PspApi.Controllers
             return Ok(merchant);
         }
 
-
         [HttpPut("{id}")]
-        public async Task<ActionResult<Merchant>> Update(Guid id, CreateOrUpdateMerchantDTO merchantData)
+        public async Task<ActionResult<Merchant>> Update(Guid id, CreateOrUpdateMerchantDTO newData)
         {
-            var merchant = await _context.Merchants.FindAsync(id);
-
+            var merchant = await _merchantsRepository.FindById(id);
 
             if (merchant == null)
                 return NotFound("Merchant not found!");
 
+            var validadeDoc = await _merchantsRepository.FindByDoc(newData.DocumentNumber);
+            if (validadeDoc != null && newData.DocumentNumber != merchant.DocumentNumber)
+                return BadRequest("Document number in use by another Merchant");
+
             if (!merchant.Active)
                 return NotFound("Merchant not found!");
 
-
-            merchant.Name = merchantData.Name ?? merchant.Name;
-            merchant.DocumentNumber = merchantData.DocumentNumber ?? merchant.DocumentNumber;
-            merchant.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
+            await _merchantsRepository.Update(merchant, newData);
 
             return Ok(merchant);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Merchant>> Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id)
         {
-            var merchant = await _context.Merchants.FindAsync(id);
+            var merchant = await _merchantsRepository.FindById(id);
 
             if (merchant == null)
                 return NotFound("Merchant not found!");
@@ -95,12 +81,9 @@ namespace PspApi.Controllers
             if (!merchant.Active)
                 return NotFound("Merchant not found!");
 
-            merchant.Active = false;
-            await _context.SaveChangesAsync();
+            await _merchantsRepository.Delete(merchant);
 
-            return Ok("Merchant Deleted");
+            return NoContent();
         }
-
-
     }
 }

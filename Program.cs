@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PspApi.Data;
+using PspApi.Repositories.MerchantsRepository;
+using PspApi.Repositories.CustomersRepository;
+using PspApi.Repositories.OrdersRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,10 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+builder.Services.AddScoped<IMerchantsRepository, MerchantsRepository>();
+builder.Services.AddScoped<ICustomersRepository, CustomersRepository>();
+builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -24,9 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
