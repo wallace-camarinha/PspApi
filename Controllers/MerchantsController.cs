@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using PspApi.DTO;
+using PspApi.DTO.ResponseDTOs;
 using PspApi.Models;
 using PspApi.Repositories.MerchantsRepository;
 
@@ -10,14 +12,16 @@ namespace PspApi.Controllers
     public class MerchantsController : ControllerBase
     {
         private readonly IMerchantsRepository _merchantsRepository;
+        private readonly IMapper _mapper;
 
-        public MerchantsController(IMerchantsRepository repository)
+        public MerchantsController(IMerchantsRepository repository, IMapper mapper)
         {
             _merchantsRepository = repository;
+            _mapper = mapper;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Merchant>> Create(CreateOrUpdateMerchantDTO merchantData)
+        public async Task<ActionResult<MerchantDTO>> Create(CreateOrUpdateMerchantDTO merchantData)
         {
             var validadeDoc = await _merchantsRepository.FindByDoc(merchantData.DocumentNumber);
 
@@ -26,18 +30,22 @@ namespace PspApi.Controllers
 
             var createdMerchant = await _merchantsRepository.Create(merchantData);
 
-            return Ok(createdMerchant);
+            var responseMerchant = _mapper.Map<MerchantDTO>(createdMerchant);
+
+            return Ok(responseMerchant);
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Merchant>>> GetAll()
+        public async Task<ActionResult<List<MerchantDTO>>> GetAll()
         {
-            var result = await _merchantsRepository.ListAll();
-            return Ok(result);
+            var merchant = await _merchantsRepository.ListAll();
+            var responseMerchant = _mapper.Map<MerchantDTO>(merchant);
+
+            return Ok(responseMerchant);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Merchant>> GetOne(Guid id)
+        public async Task<ActionResult<MerchantDTO>> GetOne(Guid id)
         {
             var merchant = await _merchantsRepository.FindById(id);
 
@@ -47,11 +55,13 @@ namespace PspApi.Controllers
             if (!merchant.Active)
                 return NotFound("Merchant not found!");
 
-            return Ok(merchant);
+            var responseMerchant = _mapper.Map<MerchantDTO>(merchant);
+
+            return Ok(responseMerchant);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Merchant>> Update(Guid id, CreateOrUpdateMerchantDTO newData)
+        public async Task<ActionResult<MerchantDTO>> Update(Guid id, CreateOrUpdateMerchantDTO newData)
         {
             var merchant = await _merchantsRepository.FindById(id);
 
@@ -67,7 +77,9 @@ namespace PspApi.Controllers
 
             await _merchantsRepository.Update(merchant, newData);
 
-            return Ok(merchant);
+            var responseMerchant = _mapper.Map<MerchantDTO>(merchant);
+
+            return Ok(responseMerchant);
         }
 
         [HttpDelete("{id}")]

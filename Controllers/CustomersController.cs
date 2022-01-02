@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using PspApi.DTO;
+using PspApi.DTO.ResponseDTOs;
 using PspApi.Models;
 using PspApi.Repositories.CustomersRepository;
 
@@ -10,14 +12,16 @@ namespace PspApi.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly ICustomersRepository _customersRepository;
+        private readonly IMapper _mapper;
 
-        public CustomersController(ICustomersRepository repository)
+        public CustomersController(ICustomersRepository repository, IMapper mapper)
         {
             _customersRepository = repository;
+            _mapper = mapper;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Customer>> Create(CreateOrUpdateCustomerDTO customerData)
+        public async Task<ActionResult<CustomerDTO>> Create(CreateOrUpdateCustomerDTO customerData)
         {
             var validateEmail = await _customersRepository.FindByEmail(customerData.Email);
 
@@ -25,18 +29,23 @@ namespace PspApi.Controllers
                 return BadRequest("Customer already exists!");
 
             var customer = await _customersRepository.Create(customerData);
-            return Ok(customer);
+
+            var customerResult = _mapper.Map<CustomerDTO>(customer);
+
+            return Ok(customerResult);
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Customer>>> GetAll()
+        public async Task<ActionResult<List<CustomerDTO>>> GetAll()
         {
             var result = await _customersRepository.ListAll();
-            return Ok(result);
+            var customerResult = _mapper.Map<List<CustomerDTO>>(result);
+
+            return Ok(customerResult);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Customer>> GetOne(Guid id)
+        public async Task<ActionResult<CustomerDTO>> GetOne(Guid id)
         {
             var customer = await _customersRepository.FindById(id);
 
@@ -46,11 +55,13 @@ namespace PspApi.Controllers
             if (!customer.Active)
                 return NotFound("Customer not found!");
 
-            return Ok(customer);
+            var customerResult = _mapper.Map<CustomerDTO>(customer);
+
+            return Ok(customerResult);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Customer>> Update(Guid id, CreateOrUpdateCustomerDTO newData)
+        public async Task<ActionResult<CustomerDTO>> Update(Guid id, CreateOrUpdateCustomerDTO newData)
         {
             var customer = await _customersRepository.FindById(id);
             if (customer == null)
@@ -65,7 +76,9 @@ namespace PspApi.Controllers
 
             await _customersRepository.Update(customer, newData);
 
-            return Ok(customer);
+            var customerResult = _mapper.Map<CustomerDTO>(customer);
+
+            return Ok(customerResult);
         }
 
         [HttpDelete("{id}")]

@@ -12,6 +12,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IMerchantsRepository, MerchantsRepository>();
 builder.Services.AddScoped<ICustomersRepository, CustomersRepository>();

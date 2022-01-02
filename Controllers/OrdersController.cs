@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using PspApi.DTO;
+using PspApi.DTO.ResponseDTOs;
 using PspApi.Models;
 using PspApi.Repositories.OrdersRepository;
 
@@ -10,14 +12,16 @@ namespace PspApi.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrdersRepository _ordersRepository;
+        private readonly IMapper _mapper;
 
-        public OrdersController(IOrdersRepository repository)
+        public OrdersController(IOrdersRepository repository, IMapper mapper)
         {
             _ordersRepository = repository;
+            _mapper = mapper;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Order>> Create(CreateOrUpdateOrderDTO orderData)
+        public async Task<ActionResult<OrderDTO>> Create(CreateOrUpdateOrderDTO orderData)
         {
             var order = new Order
                 (
@@ -35,40 +39,51 @@ namespace PspApi.Controllers
                 );
 
             var createdOrder = await _ordersRepository.Create(order);
-            return Ok(createdOrder);
+            var responseOrder = _mapper.Map<OrderDTO>(createdOrder);
+
+            return Ok(responseOrder);
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Order>>> GetAll()
+        public async Task<ActionResult<List<OrderDTO>>> GetAll()
         {
             var order = await _ordersRepository.ListAll();
-            return Ok(order);
+            var responseOrder = _mapper.Map<List<OrderDTO>>(order);
+
+            return Ok(responseOrder);
         }
 
         [HttpGet]
         [Route("/api/merchants/{merchantId}/orders")]
-        public async Task<ActionResult<List<Order>>> ListByMerchantId(Guid merchantId)
+        public async Task<ActionResult<List<OrderDTO>>> ListByMerchantId(Guid merchantId)
         {
             var orders = await _ordersRepository.ListByMerchantId(merchantId);
-            return orders;
+            var responseOrder = _mapper.Map<List<OrderDTO>>(orders);
+
+            return Ok(responseOrder);
         }
 
         [HttpGet]
         [Route("/api/customers/{customerId}/orders")]
-        public async Task<ActionResult<List<Order>>> ListByCustomerId(Guid customerId)
+        public async Task<ActionResult<List<OrderDTO>>> ListByCustomerId(Guid customerId)
         {
             var orders = await _ordersRepository.ListByCustomerId(customerId);
-            return orders;
+            var responseOrder = _mapper.Map<List<OrderDTO>>(orders);
+
+            return Ok(responseOrder);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOne(Guid id)
+        public async Task<ActionResult<OrderDTO>> GetOne(Guid id)
         {
             var order = await _ordersRepository.FindById(id);
             if (order == null)
                 return NotFound("Order not found!");
 
-            return order;
+
+            var responseOrder = _mapper.Map<OrderDTO>(order);
+
+            return Ok(responseOrder);
         }
     }
 }

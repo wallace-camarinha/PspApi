@@ -1,6 +1,5 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace PspApi.Models
 {
@@ -29,8 +28,6 @@ namespace PspApi.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        [JsonIgnore]
-        public ICollection<Order> Orders { get; set; }
 
     }
 }

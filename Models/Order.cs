@@ -51,13 +51,11 @@ namespace PspApi.Models
 
         public Merchant Merchant { get; set; }
 
-        [JsonIgnore]
         [ForeignKey("Merchant")]
         public Guid MerchantId { get; set; }
 
         public Customer Customer { get; set; }
 
-        [JsonIgnore]
         [ForeignKey("Customer")]
         public Guid CustomerId { get; set; }
     }

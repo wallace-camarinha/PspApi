@@ -40,12 +40,11 @@ namespace PspApi.Models
 
         public string DocumentType { get; set; }
         public string DocumentNumber { get; set; }
+
         public bool Active { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        [JsonIgnore]
-        public ICollection<Order> Orders { get; set; }
     }
 }
